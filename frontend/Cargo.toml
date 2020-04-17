@@ -19,6 +19,7 @@ yew = { version = "0.13", features = ["web_sys"] }
 wee_alloc = { version = "0.4.4", optional = true }
 rss = { version = "1.9.0", features = ["serde"] }
 chrono = { version = "0.4.11", features = ["serde"] }
+anyhow = "1.0.28"
 
 [dependencies.web-sys]
 version = "0.3.4"

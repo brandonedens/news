@@ -1,19 +1,26 @@
+
+use anyhow::Error;
 use log::*;
 use serde_derive::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
 use yew::services::storage::{Area, StorageService};
+use yew::services::websocket::{WebSocketService, WebSocketStatus, WebSocketTask};
 use yew::prelude::*;
 
 use std::path::PathBuf;
 
 const KEY: &str = "be4k.news.self";
 
+type AsBinary = bool;
+
 pub struct App {
     link: ComponentLink<Self>,
     storage: StorageService,
     state: State,
+    ws_service: WebSocketService,
+    ws: Option<WebSocketTask>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -30,10 +37,37 @@ struct Entry {
     read: bool,
 }
 
+pub enum WsAction {
+    Connect,
+    SendData(AsBinary),
+    Disconnect,
+    Lost,
+}
+
 pub enum Msg {
     Read(usize),
     SetFilter(Filter),
-    Nope,
+    WsAction(WsAction),
+    WsReady(Result<WsResponse, Error>),
+    Ignore,
+}
+
+impl From<WsAction> for Msg {
+    fn from(action: WsAction) -> Self {
+        Msg::WsAction(action)
+    }
+}
+
+/// This type is used as a request which sent to websocket connection.
+#[derive(Serialize, Debug)]
+struct WsRequest {
+    value: u32,
+}
+
+/// This type is an expected response from a websocket connection.
+#[derive(Deserialize, Debug)]
+pub struct WsResponse {
+    value: u32,
 }
 
 impl Component for App {
@@ -53,7 +87,13 @@ impl Component for App {
             entries,
             filter: Filter::All,
         };
-        App { link, storage, state }
+        App { 
+            link, 
+            storage, 
+            state,
+            ws_service: WebSocketService::new(),
+            ws: None,
+        }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
@@ -64,7 +104,40 @@ impl Component for App {
             Msg::SetFilter(filter) => {
                 self.state.filter = filter;
             }
-            Msg::Nope => {}
+            Msg::WsAction(action) => match action {
+                WsAction::Connect => {
+                    let callback = self.link.callback(|Json(data)| Msg::WsReady(data));
+                    let notification = self.link.callback(|status| match status {
+                        WebSocketStatus::Opened => Msg::Ignore,
+                        WebSocketStatus::Closed | WebSocketStatus::Error => WsAction::Lost.into(),
+                    });
+                    let task = self
+                        .ws_service
+                        .connect("ws://localhost:9001/ws/", callback, notification)
+                        .unwrap();
+                    self.ws = Some(task);
+                }
+                WsAction::SendData(binary) => {
+                    let request = WsRequest { value: 321 };
+                    if binary {
+                        self.ws.as_mut().unwrap().send_binary(Json(&request));
+                    } else {
+                        self.ws.as_mut().unwrap().send(Json(&request));
+                    }
+                }
+                WsAction::Disconnect => {
+                    self.ws.take();
+                }
+                WsAction::Lost => {
+                    self.ws = None;
+                }
+            },
+            Msg::WsReady(response) => {
+                //self.data = response.map(|data| data.value).ok();
+            }
+            Msg::Ignore => {
+                return false;
+            }
         }
         self.storage.store(KEY, Json(&self.state.entries));
         true
@@ -89,6 +162,11 @@ impl Component for App {
                         <span class="unread">
                             <strong>{ self.state.total_unread() }</strong>
                             { " item(s) left" }
+                        </span>
+                        <span class="fetch">
+                            <input type="button"
+                                value="fetch news"
+                                onclick=self.link.callback(|_| WsAction::Connect.into()) />
                         </span>
                         <ul class="filters">
                             { for Filter::iter().map(|flt| self.view_filter(flt)) }
