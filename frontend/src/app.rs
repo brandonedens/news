@@ -1,13 +1,12 @@
-
 use anyhow::Error;
 use log::*;
 use serde_derive::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
+use yew::prelude::*;
 use yew::services::storage::{Area, StorageService};
 use yew::services::websocket::{WebSocketService, WebSocketStatus, WebSocketTask};
-use yew::prelude::*;
 
 use std::path::PathBuf;
 
@@ -87,9 +86,9 @@ impl Component for App {
             entries,
             filter: Filter::All,
         };
-        App { 
-            link, 
-            storage, 
+        App {
+            link,
+            storage,
             state,
             ws_service: WebSocketService::new(),
             ws: None,
@@ -181,7 +180,6 @@ impl Component for App {
     }
 }
 
-
 impl App {
     fn view_filter(&self, filter: Filter) -> Html {
         let flt = filter.clone();
@@ -206,8 +204,6 @@ impl App {
         }
     }
 }
-
-
 
 #[derive(EnumIter, ToString, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Filter {
@@ -246,10 +242,7 @@ impl State {
     }
 
     fn total_read(&self) -> usize {
-        self.entries
-            .iter()
-            .filter(|e| Filter::Read.fit(e))
-            .count()
+        self.entries.iter().filter(|e| Filter::Read.fit(e)).count()
     }
 
     fn total_unread(&self) -> usize {
