@@ -6,6 +6,7 @@ use actix::prelude::*;
 use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
 use fern::colors::{Color, ColoredLevelConfig};
+use json::JsonValue;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -116,7 +117,7 @@ impl WebSocket {
                 return;
             }
 
-            ctx.ping(b"");
+            ctx.ping(b"{\"pong\": 0}");
         });
     }
 
@@ -124,8 +125,8 @@ impl WebSocket {
     fn hello_world(&self, ctx: &mut <Self as Actor>::Context) {
         ctx.run_interval(Duration::from_secs(3), |_act, ctx| {
             log::info!("Sending hello world");
-            let msg = b"Hello World".to_vec();
-            ctx.binary(msg);
+            let msg = "{\"hello\": \"world\"}";
+            ctx.text(msg);
         });
     }
 }
