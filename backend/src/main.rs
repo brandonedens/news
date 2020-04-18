@@ -1,3 +1,5 @@
+mod news;
+
 use std::time::{Duration, Instant};
 
 use actix::prelude::*;
