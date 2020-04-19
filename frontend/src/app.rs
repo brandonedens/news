@@ -36,6 +36,7 @@ struct Entry {
     read: bool,
 }
 
+#[derive(Debug)]
 pub enum WsAction {
     Connect,
     SendData(AsBinary),
@@ -43,6 +44,7 @@ pub enum WsAction {
     Lost,
 }
 
+#[derive(Debug)]
 pub enum Msg {
     Read(usize),
     SetFilter(Filter),
@@ -105,6 +107,7 @@ impl Component for App {
             }
             Msg::WsAction(action) => match action {
                 WsAction::Connect => {
+                    log::debug!("websocket connect: {:#?}", action);
                     let callback = self.link.callback(|Json(data)| Msg::WsReady(data));
                     let notification = self.link.callback(|status| match status {
                         WebSocketStatus::Opened => Msg::Ignore,
@@ -117,6 +120,7 @@ impl Component for App {
                     self.ws = Some(task);
                 }
                 WsAction::SendData(binary) => {
+                    log::debug!("websocket send_data: {:#?}", action);
                     let request = WsRequest { value: 321 };
                     if binary {
                         self.ws.as_mut().unwrap().send_binary(Json(&request));
@@ -125,13 +129,16 @@ impl Component for App {
                     }
                 }
                 WsAction::Disconnect => {
+                    log::debug!("websocket disconnect: {:#?}", action);
                     self.ws.take();
                 }
                 WsAction::Lost => {
+                    log::debug!("websocket lost: {:#?}", action);
                     self.ws = None;
                 }
             },
             Msg::WsReady(response) => {
+                log::debug!("websocket ready resp: {:#?}", response);
                 //self.data = response.map(|data| data.value).ok();
             }
             Msg::Ignore => {
@@ -205,7 +212,7 @@ impl App {
     }
 }
 
-#[derive(EnumIter, ToString, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, EnumIter, ToString, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Filter {
     All,
     Read,
