@@ -152,7 +152,7 @@ impl Component for App {
     fn view(&self) -> Html {
         info!("rendered!");
         html! {
-            <div class="news-wrapper">
+            <div class="text-gray-200">
                 <section class="newsapp">
                     <header class="header">
                         <h1>{ "news" }</h1>
@@ -169,14 +169,13 @@ impl Component for App {
                             <strong>{ self.state.total_unread() }</strong>
                             { " item(s) left" }
                         </span>
-                        <span class="fetch">
-                            <input type="button"
-                                value="fetch news"
-                                onclick=self.link.callback(|_| WsAction::Connect.into()) />
-                        </span>
                         <ul class="filters">
                             { for Filter::iter().map(|flt| self.view_filter(flt)) }
                         </ul>
+                        <div class="mt-4">
+                            <a onclick=self.link.callback(|_| WsAction::Connect.into())
+                             href="#" class="inline-block px-5 py-3 rounded-lg shadow-lg bg-indigo-500 text-white uppercase tracking-wider">{"Fetch News"}</a>
+                        </div>
                     </footer>
                 </section>
                 <footer class="info">
