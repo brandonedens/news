@@ -151,8 +151,25 @@ impl Component for App {
 
     fn view(&self) -> Html {
         info!("rendered!");
+
+        // Inspect the prefer colors scheme and possibly enable the tailwindcss dark plugin.
+        let dark = web_sys::window()
+            .and_then(|window| window.match_media("(prefers-color-scheme: dark)").ok())
+            .flatten()
+            .and_then(|query_list| Some(query_list.matches()))
+            .unwrap_or(false);
+        yew::utils::document()
+            .document_element()
+            .and_then(|element| {
+                if dark {
+                    Some(element.class_list().add_1("mode-dark"))
+                } else {
+                    Some(element.class_list().remove_1("mode-dark"))
+                }
+            });
+
         html! {
-            <div class="text-gray-200">
+            <div class="text-gray-800 dark:text-gray-200">
                 <section class="newsapp">
                     <header class="header">
                         <h1>{ "news" }</h1>

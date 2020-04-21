@@ -12,6 +12,7 @@
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.5.2",
     "style-loader": "^1.1.4",
+    "tailwindcss-dark-mode": "^1.1.4",
     "webpack": "^4.42.0",
     "webpack-cli": "^3.3.11",
     "webpack-dev-server": "^3.10.3"
