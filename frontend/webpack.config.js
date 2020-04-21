@@ -16,6 +16,22 @@ module.exports = (env, argv) => {
       filename: "news.js",
       webassemblyModuleFilename: "news.wasm"
     },
+    module: {
+      rules: [
+        {
+          test: /\.css$/,
+          use: [
+            'style-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                importLoaders: 1
+              }
+            },
+            'postcss-loader' ]
+        }
+      ]
+    },
     plugins: [
       new CopyWebpackPlugin([
         { from: './static', to: distPath }
