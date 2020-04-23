@@ -13,13 +13,12 @@ script = ['''
 (cd backend && cargo build)
 ''']
 
-[tasks.build-news]
+[tasks.build]
+clear = true
+description = "Runs the rust compiler."
+category = "Build"
 workspace = false
 dependencies = ["build-frontend", "build-backend"]
-
-[tasks.build]
-alias = "build-news"
-
 
 [tasks.check-frontend]
 description = "Check the frontend"
@@ -35,12 +34,12 @@ script = ['''
 (cd backend && cargo check)
 ''']
 
-[tasks.check-news]
+[tasks.check]
+clear = true
+description = "Runs cargo check."
+category = "Test"
 workspace = false
 dependencies = ["check-frontend", "check-backend"]
-
-[tasks.check]
-alias = "check-news"
 
 
 [tasks.test-backend]
@@ -50,10 +49,54 @@ script = ['''
 (cd backend && cargo test)
 ''']
 
-[tasks.test-news]
-workspace = false
-dependencies = ["clean", "test-backend"]
-
 [tasks.test]
+clear = true
 workspace = false
-alias = "test-news"
+description = "Runs all available tests."
+category = "Test"
+dependencies = ["test-backend"]
+
+[tasks.ci-flow]
+clear = true
+workspace = false
+description = "CI task will run cargo build and cargo test with verbose output"
+category = "CI"
+dependencies = [
+    "pre-ci-flow",
+    "print-env-flow",
+    "pre-build",
+    "check-format-ci-flow",
+    "clippy-ci-flow",
+    "build",
+    "post-build",
+    "test",
+    "examples-ci-flow",
+    "bench-ci-flow",
+    "outdated-ci-flow",
+    "ci-coverage-flow",
+    "post-ci-flow"
+]
+
+[tasks.test-flow]
+clear = true
+workspace = false
+description = "Runs pre/post hooks and cargo test."
+category = "Test"
+dependencies = [
+    "pre-test",
+    "test-multi-phases-flow",
+    "post-test"
+]
+
+[tasks.dev-test-flow]
+clear = true
+workspace = false
+description = "Development testing flow will first format the code, and than run cargo build and test"
+category = "Development"
+dependencies = [
+    "format-flow",
+    "pre-build",
+    "build",
+    "post-build",
+    "test-flow"
+]
