@@ -1,0 +1,2 @@
+status = ["Continuous Integration (stable, ubuntu-latest)"]
+deleted-merged-branches = true
