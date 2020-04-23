@@ -1,6 +1,8 @@
 use anyhow::{Error, Result};
 use chrono::prelude::*;
 use directories::ProjectDirs;
+use futures::prelude::*;
+use futures::future::{join_all, ok, err};
 use rayon::prelude::*;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
@@ -14,7 +16,7 @@ use std::path::{Path, PathBuf};
 
 pub use rss;
 
-pub fn read_news() -> Result<Vec<NewsItem>> {
+pub async fn read_news() -> Result<Vec<NewsItem>> {
     let proj_dirs = ProjectDirs::from("com", "Big Endian", "News App")
         .ok_or(Error::msg("Failure to get project directory."))?;
 
@@ -43,27 +45,26 @@ pub fn read_news() -> Result<Vec<NewsItem>> {
         .map(|x| NewsItem::new(x.clone(), &cache_dir))
         .collect();
 
-    // Download all images associated with news_items.
-    news_items.par_iter().for_each(|item| {
-        if let Some(image_url) = item.image_url() {
-            // Create path we'll use to store associated image.
-            let path = image_url.replace("https://", "");
-            let path = path.replace("http://", "");
-            let path = cache_dir.join(path);
+    let image_urls: Vec<String> = news_items.iter().filter_map(|item| item.image_url()).collect();
+    let dl_futures = image_urls.iter().map(|image_url| {
+        // Create path we'll use to store associated image.
+        let path = image_url.replace("https://", "");
+        let path = path.replace("http://", "");
+        let path = cache_dir.join(path);
 
-            if !path.exists() {
-                let mut resp = reqwest::blocking::get(&image_url).unwrap();
-                dbg!(&resp);
-                let mut buf: Vec<u8> = vec![];
-                resp.copy_to(&mut buf).unwrap();
+        reqwest::get(image_url)
+            .and_then(|resp| resp.bytes())
+            .and_then(move |bytes| {
+                if !path.exists() {
+                    let img = image::load_from_memory(&bytes).unwrap();
+                    fs::create_dir_all(path.parent().unwrap()).unwrap();
+                    img.save(&path).unwrap();
+                }
 
-                fs::create_dir_all(path.parent().unwrap()).unwrap();
-
-                let img = image::load_from_memory(&buf).unwrap();
-                img.save(&path).unwrap();
-            }
-        }
+                ok(())
+            })
     });
+    join_all(dl_futures).await;
 
     // TODO rework this.
     let mut existing_items: Vec<NewsItem> =
