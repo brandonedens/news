@@ -1,8 +1,8 @@
 use anyhow::{Error, Result};
 use chrono::prelude::*;
 use directories::ProjectDirs;
+use futures::future::{err, join_all, ok};
 use futures::prelude::*;
-use futures::future::{join_all, ok, err};
 use rayon::prelude::*;
 use rss::Channel;
 use serde::{Deserialize, Serialize};
@@ -45,7 +45,10 @@ pub async fn read_news() -> Result<Vec<NewsItem>> {
         .map(|x| NewsItem::new(x.clone(), &cache_dir))
         .collect();
 
-    let image_urls: Vec<String> = news_items.iter().filter_map(|item| item.image_url()).collect();
+    let image_urls: Vec<String> = news_items
+        .iter()
+        .filter_map(|item| item.image_url())
+        .collect();
     let dl_futures = image_urls.iter().map(|image_url| {
         // Create path we'll use to store associated image.
         let path = image_url.replace("https://", "");
