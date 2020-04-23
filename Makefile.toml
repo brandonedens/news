@@ -1,0 +1,59 @@
+
+[tasks.build-frontend]
+description = "Build the frontend"
+workspace = false
+script = ['''
+(cd frontend && cargo build --target wasm32-unknown-unknown)
+''']
+
+[tasks.build-backend]
+description = "Build the backend"
+workspace = false
+script = ['''
+(cd backend && cargo build)
+''']
+
+[tasks.build-news]
+workspace = false
+dependencies = ["build-frontend", "build-backend"]
+
+[tasks.build]
+alias = "build-news"
+
+
+[tasks.check-frontend]
+description = "Check the frontend"
+workspace = false
+script = ['''
+(cd frontend && cargo check --target wasm32-unknown-unknown)
+''']
+
+[tasks.check-backend]
+description = "Check the backend"
+workspace = false
+script = ['''
+(cd backend && cargo check)
+''']
+
+[tasks.check-news]
+workspace = false
+dependencies = ["check-frontend", "check-backend"]
+
+[tasks.check]
+alias = "check-news"
+
+
+[tasks.test-backend]
+description = "Test the backend"
+workspace = false
+script = ['''
+(cd backend && cargo test)
+''']
+
+[tasks.test-news]
+workspace = false
+dependencies = ["clean", "test-backend"]
+
+[tasks.test]
+workspace = false
+alias = "test-news"
