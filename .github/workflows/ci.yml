@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [stable, beta, nightly]
+        rust: [stable]
         os: [ubuntu-latest]
     steps:
     - name: Checkout
@@ -17,6 +17,8 @@ jobs:
       with:
         toolchain: ${{ matrix.rust }}
         profile: minimal
+        target: wasm32-unknown-unknown
+        components: rustfmt, clippy
         override: true
     - name: Install cargo-make
       uses: actions-rs/cargo@v1
